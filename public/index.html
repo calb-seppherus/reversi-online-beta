@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.0.0/dist/phaser.min.js"></script>
+    <script type="text/javascript" src="phaser.min.js"></script>
+    <script type="text/javascript" src="Menu.js"></script>
+    <script type="text/javascript" src="QuickGame.js"></script>
+    <script type="text/javascript" src="FindRoom.js"></script>
+    <script type="text/javascript" src="WaitingPlayer.js"></script>
+    <script type="text/javascript" src="Play.js"></script>
+    <script type="text/javascript" src="Winner.js"></script>
+    <script type="text/javascript" src="game.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on("connect", () => {
+            console.log("connected to server!");
+        });
+    </script>
+</body>
+</html>

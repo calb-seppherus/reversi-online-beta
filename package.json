@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "projeto-de-tcc",
+  "version": "1.0.0",
+  "main": "index.html",
+  "type":"module",
+  "devDependencies": {},
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
