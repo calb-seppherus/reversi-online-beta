@@ -7,7 +7,7 @@ const server = createServer(app);
 
 var io = new Server(server);
 
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 let players = {};
 let waitingPlayer = null;
@@ -17,9 +17,20 @@ const PLAYERS = {
 	white: 1,
 	black: 2
 }
+
+function generateRoomId() {
+    // Generate a 5-character alphanumeric ID
+    let id = Math.random().toString(36).substring(2, 7).toUpperCase();
+    // Ensure it"s not already in use (rare, but good to check)
+    while (gameRooms[id]) {
+        id = Math.random().toString(36).substring(2, 7).toUpperCase();
+    }
+    return id;
+}
+
 /*
-app.get('/', function (req, res) {
-  res.sendFile('index.html', { root: '.' })
+app.get("/", function (req, res) {
+  res.sendFile("index.html", { root: "." })
 });
 */
 function getInitialBoard() {
@@ -143,17 +154,17 @@ function PieceCount(board) {
     return { black, white };
 }
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`A user connected ${socket.id}`);
   players[socket.id] = { id: socket.id };
 
-  socket.on('playerSearch', (data) => {
+  socket.on("playerSearch", (data) => {
     const { gameTimer } = data;
 
     if (!waitingPlayer){
         waitingPlayer = socket;
         players[socket.id].playerNumber = 1;
-        socket.emit('playerInfo', { playerNumber: 1 });
+        socket.emit("playerInfo", { playerNumber: 1 });
     } else {
         const player1 = waitingPlayer;
         const player2 = socket;
@@ -179,11 +190,11 @@ io.on('connection', (socket) => {
 
         waitingPlayer = null; 
 
-        player1.emit('playerInfo', { playerNumber: 1 });
-        player2.emit('playerInfo', { playerNumber: 2 });
+        player1.emit("playerInfo", { playerNumber: 1 });
+        player2.emit("playerInfo", { playerNumber: 2 });
 
         console.log(`Game starting in room ${roomId}`);
-        io.to(roomId).emit('gameStart', {
+        io.to(roomId).emit("gameStart", {
             roomId: roomId,
             board: gameRooms[roomId].board,
             currentPlayer: gameRooms[roomId].currentPlayer,
@@ -193,7 +204,79 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('Select', (data) => {
+  socket.on("createRoom", (data) => {
+    const { gameTimer } = data;
+    const roomId = generateRoomId();
+
+    // Store this player
+    players[socket.id].playerNumber = 1; // Creator is Player 1 (White)
+    
+    // Create a new room, mark it as "waiting"
+    gameRooms[roomId] = {
+        players: [socket.id],
+        status: "waiting", // <-- New property to track state
+        timer: gameTimer,
+        // Game state (board, currentPlayer, etc.) will be added when player 2 joins
+    };
+
+    // Put the creator in the socket.io room
+    socket.join(roomId);
+    
+    // Send the new Room ID back to the creator
+    socket.emit("roomCreated", { roomId: roomId, playerNumber: 1 });
+  });
+
+  socket.on("joinRoom", (data) => {
+    const { roomId } = data;
+    const room = gameRooms[roomId];
+
+    // 1. Validate the room
+    if (!room) {
+        socket.emit("joinError", { message: "Room not found" });
+        return;
+    }
+    if (room.status !== "waiting") {
+        socket.emit("joinError", { message: "This room is already in-game" });
+        return;
+    }
+
+    // 2. Room is valid, join the player
+    console.log(`Player ${socket.id} joining room ${roomId}`);
+    players[socket.id].playerNumber = 2; // Joiner is Player 2 (Black)
+    
+    // Add player to game state and socket.io room
+    room.players.push(socket.id);
+    room.status = "active"; // Mark room as full
+    socket.join(roomId);
+
+    // 3. Set up and start the game (similar to your "playerSearch" logic)
+    const initialBoard = getInitialBoard();
+    room.board = initialBoard;
+    room.currentPlayer = PLAYERS.black; // Black (Player 2) starts
+    room.timeLeft = {
+        [PLAYERS.white]: room.timer, // Use timer set by creator
+        [PLAYERS.black]: room.timer
+    };
+    room.lastMoveTime = Date.now();
+
+    // 4. Notify players
+    const player1 = io.sockets.sockets.get(room.players[0]);
+    
+    player1.emit("playerInfo", { playerNumber: 1 });
+    socket.emit("playerInfo", { playerNumber: 2 }); // "socket" is player2
+
+    io.to(roomId).emit("gameStart", {
+        roomId: roomId,
+        board: room.board,
+        currentPlayer: room.currentPlayer,
+        timer: room.timer
+    });
+    
+    // 5. Start the timer
+    startGameTimer(roomId);
+  });
+
+  socket.on("Select", (data) => {
     const { x, y, roomId } = data;
     const room = gameRooms[roomId];
 
@@ -202,13 +285,13 @@ io.on('connection', (socket) => {
     const playerNumber = players[socket.id].playerNumber;
 
     if (playerNumber !== room.currentPlayer) {
-        socket.emit('invalidMove', { message: "Not your turn!" });
+        socket.emit("invalidMove", { message: "Not your turn!" });
         return;
     }
 
     const spots = Between(x, y, room.board, room.currentPlayer);
     if (spots.length === 0) {
-        socket.emit('invalidMove', { message: "Invalid move!" });
+        socket.emit("invalidMove", { message: "Invalid move!" });
         return;
     }
 
@@ -232,7 +315,7 @@ io.on('connection', (socket) => {
         }
     }
 
-    io.to(roomId).emit('gameStateUpdate', {
+    io.to(roomId).emit("gameStateUpdate", {
         board: room.board,
         currentPlayer: room.currentPlayer,
         timeLeft: room.timeLeft
@@ -240,7 +323,7 @@ io.on('connection', (socket) => {
   });
 
 
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     console.log(`User ${socket.id} disconnected`);
     
     if (waitingPlayer && waitingPlayer.id === socket.id) {
@@ -255,6 +338,11 @@ io.on('connection', (socket) => {
 
     if (roomId) {
         const room = gameRooms[roomId];
+
+        if (room.status === "waiting") {
+            console.log(`Deleting waiting room ${roomId} as creator disconnected.`);
+            delete gameRooms[roomId];
+        } else {
         
         const remainingPlayerId = room.players.find(id => id !== socket.id);
 
@@ -263,7 +351,7 @@ io.on('connection', (socket) => {
             
             const winnerText = (disconnectedPlayerNumber === 1) ? "Black Wins" : "White Wins";
 
-            io.to(remainingPlayerId).emit('gameOver', { 
+            io.to(remainingPlayerId).emit("gameOver", { 
                 winner: winnerText, 
                 reason: "Opponent disconnected" 
             });
@@ -273,6 +361,7 @@ io.on('connection', (socket) => {
             clearInterval(room.timerInterval);
         }
         delete gameRooms[roomId];
+        }
     }
     
     delete players[socket.id];
@@ -300,7 +389,7 @@ function startGameTimer(roomId) {
             return;
         }
 
-        io.to(roomId).emit('timerUpdate', room.timeLeft);
+        io.to(roomId).emit("timerUpdate", room.timeLeft);
 
     }, 1000);
 }
@@ -322,11 +411,11 @@ function endGame(roomId, reason) {
         winner = "Black Wins";
     }
 
-    io.to(roomId).emit('gameOver', { winner: winner, reason: reason });
+    io.to(roomId).emit("gameOver", { winner: winner, reason: reason });
     
     delete gameRooms[roomId];
 }
 
-server.listen(8081, function () {
+server.listen(3000, function () {
   console.log(`Listening on ${server.address().port}`);
 });

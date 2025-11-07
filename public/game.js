@@ -3,8 +3,11 @@ var config = {
     parent: "phaser-example",
     width: 1280,
     height: 720,
+    dom:{
+        createContainer: true
+    },
     backgroundColor: 0x000000,
-    scene: [Menu, QuickGame, FindRoom, Play, Winner, WaitingPlayer],
+    scene: [Menu, QuickGame, FindRoom, Play, Winner, WaitingPlayer, SetTimer],
     physics: {
         default: "arcade",
         arcade: {

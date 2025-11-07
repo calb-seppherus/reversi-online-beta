@@ -12,16 +12,16 @@ class WaitingPlayer extends Phaser.Scene {
         const gameTimer = data.gameTimer;
 
         this.socket = io();
-        this.registry.set('socket', this.socket);
+        this.registry.set("socket", this.socket);
 
         this.socket.emit("playerSearch", { gameTimer: gameTimer });
 
-        this.socket.on('playerInfo', (data) => {
+        this.socket.on("playerInfo", (data) => {
             this.playerNumber = data.playerNumber;
-            this.registry.set('playerNumber', data.playerNumber); 
+            this.registry.set("playerNumber", data.playerNumber); 
         });
 
-        this.socket.on('gameStart', (data) => {
+        this.socket.on("gameStart", (data) => {
             this.scene.start("Play", { 
                 roomId: data.roomId,
                 board: data.board,

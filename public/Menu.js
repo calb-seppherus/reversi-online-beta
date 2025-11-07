@@ -26,7 +26,16 @@ class Menu extends Phaser.Scene {
             fontSize: "32px",
         }).setOrigin(0.5);
 
-        const quickGameButton = this.add.text(config.width / 2, config.height / 2 + 100, "Quick Game", {
+        const quickGameButton = this.add.text(config.width / 2, config.height / 2, "Quick Game", {
+            fontFamily: "Arial",
+            fontSize: "32px",
+            color: "#ffffff",
+            align: "center",
+            fixedWidth: 260,
+            backgroundColor: "#34c759"
+        }).setPadding(32).setOrigin(0.5);
+
+        const findRoomButton = this.add.text(config.width / 2, config.height / 2 + 240, "Find Room", {
             fontFamily: "Arial",
             fontSize: "32px",
             color: "#ffffff",
@@ -36,6 +45,7 @@ class Menu extends Phaser.Scene {
         }).setPadding(32).setOrigin(0.5);
 
         quickGameButton.setInteractive({ useHandCursor: true });
+        findRoomButton.setInteractive({ useHandCursor: true });
 
         quickGameButton
         .on("pointerover", () => {
@@ -46,6 +56,17 @@ class Menu extends Phaser.Scene {
         })
         .on("pointerdown", () => {
             this.scene.start("QuickGame");
+        })
+
+        findRoomButton
+        .on("pointerover", () => {
+            findRoomButton.setBackgroundColor("#8d8d8d");
+        })
+        .on("pointerout", () => {
+            findRoomButton.setBackgroundColor("#34c759");
+        })
+        .on("pointerdown", () => {
+            this.scene.start("FindRoom");
         })
     }
 }

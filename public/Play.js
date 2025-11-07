@@ -9,8 +9,8 @@ class Play extends Phaser.Scene {
             black:  2
         }
 
-        this.socket = this.registry.get('socket');
-        this.playerNumber = this.registry.get('playerNumber');
+        this.socket = this.registry.get("socket");
+        this.playerNumber = this.registry.get("playerNumber");
         this.roomId = data.roomId;
         
         this.board = data.board;
@@ -27,7 +27,7 @@ class Play extends Phaser.Scene {
                 this.grid[x][y].setInteractive({ cursor: "pointer"});
 
                 this.grid[x][y].on("pointerdown", () => {
-                    this.socket.emit('Select', { x: x, y: y, roomId: this.roomId });
+                    this.socket.emit("Select", { x: x, y: y, roomId: this.roomId });
                 });
             }
         }
@@ -55,7 +55,7 @@ class Play extends Phaser.Scene {
             fill: isMyTurn ? "#FFF" : "#888"
         });
 
-        this.socket.on('gameStateUpdate', (data) => {
+        this.socket.on("gameStateUpdate", (data) => {
             this.board = data.board;
             this.currentPlayer = data.currentPlayer;
             this.activePlayer = (this.currentPlayer === PLAYERS.black) ? "black" : "white";
@@ -72,7 +72,7 @@ class Play extends Phaser.Scene {
             this.playerTurnText.setFill(this.currentPlayer === this.playerNumber ? "#FFF" : "#888");
         });
 
-        this.socket.on('timerUpdate', (timeLeft) => {
+        this.socket.on("timerUpdate", (timeLeft) => {
             this.timeLeft.white = timeLeft[PLAYERS.white];
             this.timeLeft.black = timeLeft[PLAYERS.black];
             
@@ -80,17 +80,17 @@ class Play extends Phaser.Scene {
             this.whiteTimerText.setText("White Timer: " + this.FormatTime(this.timeLeft.white));
         });
         
-        this.socket.on('gameOver', (data) => {
+        this.socket.on("gameOver", (data) => {
             this.scene.pause();
             this.scene.start("Winner", { result: data.winner });
         });
         
-        this.socket.on('opponentDisconnect', () => {
+        this.socket.on("opponentDisconnect", () => {
             this.add.text(640, 360, "Opponent Disconnected", { fontSize: "32px" }).setOrigin(0.5);
             this.scene.pause();
         });
 
-        this.socket.on('invalidMove', (data) => {
+        this.socket.on("invalidMove", (data) => {
             console.log("Invalid move:", data.message);
         });
     }
