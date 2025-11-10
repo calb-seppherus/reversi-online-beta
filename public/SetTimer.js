@@ -64,7 +64,7 @@ class SetTimer extends Phaser.Scene{
             backButton.setBackgroundColor("#ff3b30");
         })
         .on("pointerdown", () => {
-            this.scene.start("Menu");
+            this.scene.start("FindRoom");
         })
 
         min1Button
