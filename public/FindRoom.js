@@ -6,7 +6,6 @@ class FindRoom extends Phaser.Scene{
     create(){
         this.socket = this.registry.get("socket"); 
         if (!this.socket) {
-            // Fallback if socket isn"t in registry (e.g., reloaded this page)
             this.socket = io();
             this.registry.set("socket", this.socket);
         }
@@ -80,7 +79,6 @@ class FindRoom extends Phaser.Scene{
         .on("pointerdown", () => {
             const roomId = roomInput.node.value.toUpperCase();
             if (roomId.length === 5) {
-                // Emit to server to join a room
                 this.socket.emit("joinRoom", { roomId: roomId });
             } else {
                 this.statusText.setText("Room ID must be 5 characters.");

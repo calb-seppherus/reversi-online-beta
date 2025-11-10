@@ -96,7 +96,6 @@ class Play extends Phaser.Scene {
     }
 
     update(){
-        // Update board textures
         for(let x = 0 ; x < 8 ; x++){
             for(let y = 0 ; y < 8 ; y++){
                 if(this.board[x][y] === 2){
@@ -138,9 +137,4 @@ class Play extends Phaser.Scene {
         }
         return {black, white};
     }
-
-    // REMOVE: Available()
-    // REMOVE: Select()
-    // REMOVE: GameResult()
-    // REMOVE: Between()
 }

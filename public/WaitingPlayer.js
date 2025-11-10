@@ -4,15 +4,18 @@ class WaitingPlayer extends Phaser.Scene {
     }
 
     create(data){
+        this.socket = this.registry.get("socket");
+        if (!this.socket) {
+            this.socket = io();
+            this.registry.set("socket", this.socket)
+        }
+
         this.add.text(640, 360, "Waiting Player", {
             fontFamily: "Arial",
             fontSize: "32px",
         }).setOrigin(0.5);
 
         const gameTimer = data.gameTimer;
-
-        this.socket = io();
-        this.registry.set("socket", this.socket);
 
         this.socket.emit("playerSearch", { gameTimer: gameTimer });
 

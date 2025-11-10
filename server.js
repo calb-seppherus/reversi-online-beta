@@ -19,9 +19,7 @@ const PLAYERS = {
 }
 
 function generateRoomId() {
-    // Generate a 5-character alphanumeric ID
     let id = Math.random().toString(36).substring(2, 7).toUpperCase();
-    // Ensure it"s not already in use (rare, but good to check)
     while (gameRooms[id]) {
         id = Math.random().toString(36).substring(2, 7).toUpperCase();
     }
@@ -78,24 +76,25 @@ function Between(x, y, board, player) {
         return true;
     }
 
+    // right
     while(true){ 
 		ox++; if(!spotting()) break; 
 	};
     if (connected) spots = spots.concat(temp);
     reset();
-    // horizontal left
+    // left
     while(true){
 		 ox--; if(!spotting()) break; 
 	};
     if (connected) spots = spots.concat(temp);
     reset();
-    // vertical bottom
+    // bottom
     while(true){
 		oy++; if(!spotting()) break; 
 	};
     if (connected) spots = spots.concat(temp);
     reset();
-    // vertical top
+    // top
     while(true){ 
 		oy--; if(!spotting()) break; 
 	};
@@ -208,21 +207,16 @@ io.on("connection", (socket) => {
     const { gameTimer } = data;
     const roomId = generateRoomId();
 
-    // Store this player
-    players[socket.id].playerNumber = 1; // Creator is Player 1 (White)
+    players[socket.id].playerNumber = 1;
     
-    // Create a new room, mark it as "waiting"
     gameRooms[roomId] = {
         players: [socket.id],
-        status: "waiting", // <-- New property to track state
+        status: "waiting",
         timer: gameTimer,
-        // Game state (board, currentPlayer, etc.) will be added when player 2 joins
     };
 
-    // Put the creator in the socket.io room
     socket.join(roomId);
     
-    // Send the new Room ID back to the creator
     socket.emit("roomCreated", { roomId: roomId, playerNumber: 1 });
   });
 
@@ -230,7 +224,6 @@ io.on("connection", (socket) => {
     const { roomId } = data;
     const room = gameRooms[roomId];
 
-    // 1. Validate the room
     if (!room) {
         socket.emit("joinError", { message: "Room not found" });
         return;
@@ -240,30 +233,26 @@ io.on("connection", (socket) => {
         return;
     }
 
-    // 2. Room is valid, join the player
     console.log(`Player ${socket.id} joining room ${roomId}`);
-    players[socket.id].playerNumber = 2; // Joiner is Player 2 (Black)
+    players[socket.id].playerNumber = 2;
     
-    // Add player to game state and socket.io room
     room.players.push(socket.id);
-    room.status = "active"; // Mark room as full
+    room.status = "active";
     socket.join(roomId);
 
-    // 3. Set up and start the game (similar to your "playerSearch" logic)
     const initialBoard = getInitialBoard();
     room.board = initialBoard;
-    room.currentPlayer = PLAYERS.black; // Black (Player 2) starts
+    room.currentPlayer = PLAYERS.black; 
     room.timeLeft = {
-        [PLAYERS.white]: room.timer, // Use timer set by creator
+        [PLAYERS.white]: room.timer, 
         [PLAYERS.black]: room.timer
     };
     room.lastMoveTime = Date.now();
 
-    // 4. Notify players
     const player1 = io.sockets.sockets.get(room.players[0]);
     
     player1.emit("playerInfo", { playerNumber: 1 });
-    socket.emit("playerInfo", { playerNumber: 2 }); // "socket" is player2
+    socket.emit("playerInfo", { playerNumber: 2 }); 
 
     io.to(roomId).emit("gameStart", {
         roomId: roomId,
@@ -271,8 +260,7 @@ io.on("connection", (socket) => {
         currentPlayer: room.currentPlayer,
         timer: room.timer
     });
-    
-    // 5. Start the timer
+     
     startGameTimer(roomId);
   });
 
